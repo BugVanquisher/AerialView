@@ -4,7 +4,7 @@ from dash.dependencies import Input, Output
 import yfinance as yf
 
 from app import app
-from apps import app1
+from pages import stock_overview, overview
 
 
 app.layout = html.Div([
@@ -16,10 +16,10 @@ app.layout = html.Div([
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/apps/app1':
-        return app1.layout
+    if pathname == '/aerial-view/stock-overview':
+        return stock_overview.layout
     else:
-        return '404'
+        return overview.layout
 
 if __name__ == '__main__':
     yf.pdr_override()

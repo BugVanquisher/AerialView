@@ -12,22 +12,15 @@ from datetime import datetime as dt
 from datetime import date
 import re
 import plotly.express as px
+import dash_table
 
 from app import app
-
-# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-# yf.pdr_override() # <== that's all it takes :-)
-# df = pdr.get_data_yahoo("AAPL", start="2017-01-01", end="2020-01-01")
-# for col in df.columns:
-#     df[col] = df[col].map(lambda x: '{0:.2f}'.format(x))
-# df.reset_index(inplace=True)
-# fig = px.line(df, x='Date', y = [col for col in df.columns if (col != 'Date' and col != 'Volume')])
-
-# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+from utils import Header
 
 layout = dbc.Container(html.Div([
+    Header(app),
     dcc.Store(id="ticker-info"),
+    dcc.Store(id="ticker-stock-prices"),
     dbc.Row([
         
         # Left Config
@@ -70,10 +63,21 @@ layout = dbc.Container(html.Div([
         html.Div(id="ticker-info-summary")
     ]),
 
-    html.Div([
+    dbc.Row([
+        dbc.Col([dcc.Graph(id="polar-graph-1")]),
+        dbc.Col([dcc.Graph(id="polar-graph-2")])
+        ]),
+        
 
-        dcc.Graph(id="polar-graph")
-    ]),
+    html.Div([
+        dash_table.DataTable(
+            id='datatable-row-ids',
+            columns=[{'name': 'Date', 'id': 'Date', 'deletable': True}, {'name': 'Open', 'id': 'Open', 'deletable': True}, {'name': 'High', 'id': 'High', 'deletable': True}, {'name': 'Low', 'id': 'Low', 'deletable': True}, {'name': 'Close', 'id': 'Close', 'deletable': True}, {'name': 'Adj Close', 'id': 'Adj Close', 'deletable': True}, {'name': 'Volume', 'id': 'Volume', 'deletable': True}],
+            page_current=0,
+            page_size=10,
+            page_action='custom'
+            )
+    ])
 
     
 #     # Right Graph
@@ -100,8 +104,8 @@ def get_period_data(ticker_name, start_date, end_date):
     for col in df.columns:
         df[col] = df[col].map(lambda x: '{0:.2f}'.format(x))
     df.reset_index(inplace=True)
-    fig = px.line(df, x='Date', y = [col for col in df.columns if (col != 'Date' and col != 'Volume')])
-    return fig
+    fig = px.line(df, x='Date', y = [col for col in df.columns if (col != 'Date' and col != 'Volume')], title= f"Stock Price for {ticker_name.upper()}")
+    return fig, df.to_dict('records')
 
 def get_ticker_info(ticker_name):
     try:
@@ -113,13 +117,15 @@ def get_ticker_info(ticker_name):
 
 @app.callback(
     [Output('line-graph', 'figure'),
-    Output('ticker-info', 'data')],
+    Output('ticker-info', 'data'),
+    Output('ticker-stock-prices', 'data')],
     [Input('my-date-picker-range', 'start_date'),
      Input('my-date-picker-range', 'end_date'),
      Input('ticker_name', 'value')])
 def update_output(start_date, end_date, ticker_name):
     fig = px.line()
     ticker_info = {}
+    stock_prices = {}
     if start_date is not None:
         start_date = dt.strptime(re.split('T| ', start_date)[0], '%Y-%m-%d')
 
@@ -129,11 +135,11 @@ def update_output(start_date, end_date, ticker_name):
     if start_date and end_date and ticker_name:
         print (f"start date is: {start_date}")
         print (f"end date is: {end_date}")
-        fig = get_period_data(ticker_name, start_date, end_date)
+        fig, stock_prices = get_period_data(ticker_name, start_date, end_date)
         fig.update_layout(transition_duration=500)
 
         ticker_info = get_ticker_info(ticker_name)
-    return fig, ticker_info
+    return fig, ticker_info, stock_prices
 
 @app.callback(
     Output('ticker-info-summary', 'children'),
@@ -149,24 +155,55 @@ def update_summary(data):
         return ""
 
 @app.callback(
-    Output("polar-graph", 'figure'),
+    [Output("polar-graph-1", 'figure'),
+    Output("polar-graph-2", 'figure')],
     [Input('ticker_name', 'value')]
 )
 def update_recommendations(ticker_name):
     try:
+        ticker_name = ticker_name.upper()
         data = yf.Ticker(ticker_name)
         recommends = data.recommendations
 
-        value_counts = recommends['To Grade'].value_counts(dropna=True).to_dict()
-        value_counts = {k: v for k, v in value_counts.items() if k}
+        one_month_recommends = recommends[recommends.index >= date.today() - pd.DateOffset(months=1)]
+        three_month_recommends = recommends[recommends.index >= date.today() - pd.DateOffset(months=3)]
 
-        df = pd.DataFrame(dict(
-                r = list(value_counts.values()), 
-                theta = list(value_counts.keys())
+        one_month_value_counts = one_month_recommends['To Grade'].value_counts(dropna=True).to_dict()
+        one_month_value_counts = {k: v for k, v in one_month_value_counts.items() if k}
+
+        one_month_df = pd.DataFrame(dict(
+                r = list(one_month_value_counts.values()), 
+                theta = list(one_month_value_counts.keys())
             ))
+    
+        one_month_fig = px.line_polar(one_month_df, r='r', theta='theta', line_close=True, title= f'1 Month Recommendations for {ticker_name}')
+        one_month_fig.update_traces(fill='toself')
 
-        fig = px.line_polar(df, r='r', theta='theta', line_close=True)
-        fig.update_traces(fill='toself')
-        return fig
+        three_month_value_counts = three_month_recommends['To Grade'].value_counts(dropna=True).to_dict()
+        three_month_value_counts = {k: v for k, v in three_month_value_counts.items() if k}
+
+        three_month_df = pd.DataFrame(dict(
+                r = list(three_month_value_counts.values()), 
+                theta = list(three_month_value_counts.keys())
+            ))
+    
+        three_month_fig = px.line_polar(three_month_df, r='r', theta='theta', line_close=True, title= f'3 Months Recommendations for {ticker_name}')
+        three_month_fig.update_traces(fill='toself')
+
+
+        return one_month_fig, three_month_fig
     except:
-        return px.line_polar()
+        return px.line_polar(), px.line_polar()
+
+@app.callback(
+    Output("datatable-row-ids", 'data'),
+    [Input('ticker-stock-prices', 'data'),
+     Input('datatable-row-ids', "page_current"),
+     Input('datatable-row-ids', "page_size")]
+)
+def update_table(data, page_current, page_size):
+    try:
+        if data:
+            return data[page_current*page_size:(page_current+ 1)*page_size]
+    except:
+        return []
