@@ -17,7 +17,7 @@ import dash_table
 from app import app
 from utils import Header
 
-layout = dbc.Container(html.Div([
+layout = dbc.Container([
     Header(app),
     dcc.Store(id="ticker-info"),
     dcc.Store(id="ticker-stock-prices"),
@@ -95,7 +95,7 @@ layout = dbc.Container(html.Div([
     #     marks={str(year): str(year) for year in df['Year'].unique()},
     #     step=None
     # ), style={'width': '49%', 'padding': '0px 20px 20px 20px'})
-]))
+])
 
 
 def get_period_data(ticker_name, start_date, end_date):
