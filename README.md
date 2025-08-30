@@ -28,7 +28,7 @@ cd AerialView
 pip install -r requirements.txt
 ```
 
-⸻
+---
 
 ## ▶️ Usage
 
@@ -41,7 +41,7 @@ CLI Mode
 python -m aerialview --ticker AAPL --start 2023-01-01 --end 2023-12-31
 ```
 
-⸻
+---
 
 ## 📊 Example Visuals
 
@@ -50,14 +50,14 @@ Candlestick Chart
 Correlation Heatmap
 
 
-⸻
+---
 
 ## 📚 Documentation
 
 Each function includes Google-style docstrings.
 For more details, check the docs/ folder (coming soon).
 
-⸻
+---
 
 ## 🧪 Testing
 
@@ -70,7 +70,7 @@ Tests cover:
 	•	Transformations
 	•	Visualization outputs
 
-⸻
+---
 
 ## 📌 Roadmap
 
@@ -80,14 +80,14 @@ See ROADMAP.md for planned improvements:
 	•	Portfolio analysis
 	•	Live deployment on Streamlit Cloud
 
-⸻
+---
 
 ## 🤝 Contributing
 
 Contributions welcome!
 Please see CONTRIBUTING.md (to be added) for guidelines.
 
-⸻
+---
 
 ## 📜 License
 
