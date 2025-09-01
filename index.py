@@ -1,12 +1,9 @@
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import yfinance as yf
-from dash import Dash
 
 from pages import stock_overview, overview
-
-app = Dash(__name__)
-server = app.server
+from aerialview.app.app import app, server
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
