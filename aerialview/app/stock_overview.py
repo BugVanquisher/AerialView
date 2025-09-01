@@ -1,6 +1,11 @@
-
-
 from dash import html, dcc
+import plotly.graph_objects as go
+from aerialview.utils.visualizations import create_candlestick_chart
+from aerialview.utils.data_fetch import fetch_stock_data
+
+default_ticker = "AAPL"
+df = fetch_stock_data(default_ticker)
+candlestick_chart = create_candlestick_chart(df)
 
 layout = html.Div([
     html.H1("Stock Overview"),
@@ -8,7 +13,9 @@ layout = html.Div([
     html.Div(id='stock-charts-placeholder', children=[
         dcc.Loading(
             type="default",
-            children=html.Div("Stock-specific charts will be displayed here.")
+            children=dcc.Graph(
+                figure=candlestick_chart
+            )
         )
     ])
 ])
