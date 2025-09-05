@@ -95,4 +95,11 @@ MIT License © 2025 BugVanquisher
 
 ---
 
-![Stock for Apple](https://github.com/JuneSunshine/AerialView/blob/master/assets/sample_img.png)
+## Screenshots
+
+### UI v2
+![Stock for Apple](https://github.com/JuneSunshine/AerialView/blob/master/assets/screenshot_v2.png)
+
+
+### UI v1
+![Stock for Apple](https://github.com/JuneSunshine/AerialView/blob/master/assets/screenshot_v1.png)
