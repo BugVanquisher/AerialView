@@ -1,44 +1,41 @@
 from dash import html, dcc
-import plotly.graph_objects as go
-from aerialview.utils.visualizations import create_candlestick_chart
-from aerialview.utils.data_fetch import fetch_stock_data
+from aerialview.core.visualize import multi_ticker_comparison
 
-default_ticker = "AAPL"
-df = fetch_stock_data(default_ticker)
-candlestick_chart = create_candlestick_chart(df)
+default_tickers = ["AAPL", "MSFT", "TSLA"]
+figure = multi_ticker_comparison(default_tickers)
 
 layout = html.Div([
-    html.H1("Stock Overview"),
-    html.P("This page provides an overview of a selected stock, including relevant charts and metrics."),
+    html.H1("Overview"),
+    html.P("This page provides an overview of selected stocks, comparing their performance."),
     dcc.Dropdown(
-        id='ticker-dropdown',
+        id='tickers-dropdown',
         options=[
             {'label': 'Apple (AAPL)', 'value': 'AAPL'},
             {'label': 'Microsoft (MSFT)', 'value': 'MSFT'},
             {'label': 'Tesla (TSLA)', 'value': 'TSLA'},
+            {'label': 'Google (GOOGL)', 'value': 'GOOGL'},
         ],
-        value=default_ticker,
+        value=default_tickers,
+        multi=True,
         clearable=False,
-        style={'width': '300px', 'margin-bottom': '20px'}
+        style={'width': '400px', 'margin-bottom': '20px'}
     ),
-    html.Div(id='stock-charts-placeholder', children=[
-        dcc.Loading(
-            type="default",
-            children=dcc.Graph(
-                id='candlestick-chart',
-                figure=candlestick_chart
-            )
+    dcc.Loading(
+        type="default",
+        children=dcc.Graph(
+            id='multi-ticker-chart',
+            figure=figure
         )
-    ])
+    )
 ])
 
-# Dash callback for interactive chart update
 from dash import Input, Output, callback
 
 @callback(
-    Output('candlestick-chart', 'figure'),
-    Input('ticker-dropdown', 'value')
+    Output('multi-ticker-chart', 'figure'),
+    Input('tickers-dropdown', 'value')
 )
-def update_candlestick_chart(selected_ticker):
-    df = fetch_stock_data(selected_ticker)
-    return create_candlestick_chart(df)
+def update_multi_ticker_chart(selected_tickers):
+    if not selected_tickers:
+        selected_tickers = default_tickers
+    return multi_ticker_comparison(selected_tickers)
